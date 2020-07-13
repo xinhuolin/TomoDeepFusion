@@ -25,3 +25,7 @@ Thumbs.db
 # system ignore
 .DS_Store
 Thumbs.db
+model_weights/Deepfusion(3d).pth
+model_weights/Denoise(sharp).pth
+model_weights/Deepfusion(3dGAN).pth
+model_weights/Denoise(smooth).pth
