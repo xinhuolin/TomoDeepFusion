@@ -37,8 +37,9 @@ def GetIndexRangeOfBlk(height, width, blk_row, blk_col, blk_r, blk_c, over_lap =
 	return (upper_left_c, upper_left_r, lower_right_c, lower_right_r), (ol_upper_left_c, ol_upper_left_r, ol_lower_right_c, ol_lower_right_r)
 
 def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, iter = 1):
-	angle = matangles[0].astype(np.float32)
+	angle = matangles[0].astype(np.float)
 	tomos = {}
+	tomos_r = {}
 	tomos_d = {}
 	is_fusion = 0
 	if os.path.basename(model_path) == "Denoise(sharp).pth":
@@ -59,19 +60,36 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, ite
 
 
 	tomos[name] = np.zeros((size[0], size[1], size[1]))
+	tomos_r[name] = np.zeros((size[0], size[1], size[1]))
 	for j in tqdm(range(size[0])):
-		sinogram = np.array(matdata[name][j,:,:])
+		sinogram = np.array(matdata[name][j,:,:]).astype(np.float)
 		if is_fusion==1:
 			tomogram = Recon.fusion_3d(sinogram, angle, model_path)
+			if recon_path == "wbp":
+				tomogram_recon = iradon(sinogram, theta=angle)
+			elif recon_path == "sart":
+				tomogram_recon = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+			elif recon_path == "sirt":
+				tomogram_recon = Recon.sirt_xin(sinogram, angles=angle)  # iradon 0. 255.
+			else:
+				raise ValueError
+			tomos_r[name][j, :, :] = tomogram_recon.copy()
 		elif is_fusion==2:
 			tomogram = Recon.fusion_3dGAN(sinogram, angle, model_path)
+			if recon_path == "wbp":
+				tomogram_recon = iradon(sinogram, theta=angle)
+			elif recon_path == "sart":
+				tomogram_recon = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+			elif recon_path == "sirt":
+				tomogram_recon = Recon.sirt_xin(sinogram, angles=angle)  # iradon 0. 255.
+			else:
+				raise ValueError
+			tomos_r[name][j, :, :] = tomogram_recon.copy()
 		else:
 			if recon_path == "wbp":
-				tomogram = Recon.wbp(sinogram, angles=angle)  # iradon 0. 255.
-				# tomogram = iradon(sinogram, theta=angle)
+				tomogram = iradon(sinogram, theta=angle)
 			elif recon_path == "sart":
-				tomogram = Recon.sart_cuda(sinogram, angles=angle)  # iradon 0. 255.
-				# tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+				tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
 			elif recon_path == "sirt":
 				tomogram = Recon.sirt_xin(sinogram, angles=angle)  # iradon 0. 255.
 			else:
@@ -80,7 +98,9 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, ite
 		tomos[name][j, :, :] = tomogram.copy()
 	if is_fusion>0:
 		tomos_d[name] = tomos[name]
+		tomos[name] = tomos_r[name]
 	else:
+		topad = size[1]
 		if size[1]==128 or size[1]==256 or size[1]==512 or size[1]==1024:
 			pass
 		else:
@@ -98,8 +118,9 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, ite
 			paddown = np.zeros((size[0], int(topad - size[1] - padup.shape[1]), size[1]))
 			tomos[name] = np.concatenate((padup,tomos[name],paddown),axis=1)
 			tomos[name] = np.concatenate((padleft,tomos[name],padright),axis=2)
-			transform = transforms.Compose([transforms.ToTensor()])
-			img = transform(tomos[name].transpose((2, 1, 0)))
+
+		transform = transforms.Compose([transforms.ToTensor()])
+		img = transform(tomos[name].transpose((1, 2, 0)))
 
 
 

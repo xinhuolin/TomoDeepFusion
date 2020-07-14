@@ -30,12 +30,12 @@ from skimage.transform import radon, iradon, iradon_sart
 # transform = transforms.Compose(
 #     [transforms.ToTensor()])
 #
-path = r"dataadf.mat"
-data = scio.loadmat(path)
-keys = list(data.keys())
-print(keys)
-angles = data[keys[-4]]
-print(angles)
+# path = r"dataadf.mat"
+# data = scio.loadmat(path)
+# keys = list(data.keys())
+# print(keys)
+# angles = data[keys[-4]]
+# print(angles)
 # size = data[keys[-3]].shape
 # tomos = {}
 # algos = ["wbp", "sart", "sirt"]
@@ -100,5 +100,15 @@ print(angles)
 #
 # print(tomos.shape, output.shape)
 
-
+path = r"dataadf.mat"
+data = scio.loadmat(path)
+keys = list(data.keys())
+print(keys)
+angles = data[keys[-1]]
+print(angles)
+angle = angles[0].astype(np.float)
+for j in tqdm(range(data["adf"].shape[0])):
+    sinogram = np.array(data["adf"][j, :, :]).astype(np.float)
+    tomogram = iradon(sinogram, theta=angle)
+    # tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
 
