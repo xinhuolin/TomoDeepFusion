@@ -63,6 +63,7 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 	tomos_r[name] = np.zeros((size[0], size[1], size[1]))
 	for j in tqdm(range(size[0])):
 		sinogram = np.array(matdata[name][:,j,:]).astype(np.float)
+		torch.cuda.empty_cache()
 		if is_fusion==1:
 			tomogram = Recon.fusion_3d(sinogram, angle, model_path)
 			if recon_path == "wbp":
