@@ -221,7 +221,7 @@ class Recon(object):
         start_time = time.time()
         # model3d_dir = "../../model/Deepfusion/models_3dGAN_nodog/Deepfusion_4.pth"
         m = unet_standard_3d.NestedUNet(nb_filter=(32, 64, 128, 256, 512)).cuda()
-        if torch.cuda.device_count() > 1:
+        if torch.cuda.device_count() >= 1:
             m = torch.nn.DataParallel(m)
         m = m.eval()
         m.load_state_dict(torch.load(model3d_dir))
@@ -273,7 +273,7 @@ class Recon(object):
         start_time = time.time()
         # model3dGAN_dir = "../../model/Deepfusion/models_3dGAN_nodog/Deepfusion_4.pth"
         m = unet_standard_3d.NestedUNet(nb_filter=(32, 64, 128, 256, 512)).cuda()
-        if torch.cuda.device_count() > 1:
+        if torch.cuda.device_count() >= 1:
             m = torch.nn.DataParallel(m)
         m = m.eval()
         m.load_state_dict(torch.load(model3dGAN_dir))
