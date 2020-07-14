@@ -168,17 +168,18 @@ class Recon(object):
     def sart_tvm(tils, angles, tau=0.2, round_num=5, tvm_iteration=200, relaxation=0.3):
         # print("--start sart_tvm---")
         denoise_TVM = None
+        tils = tils.astype(np.float)
         for epoch in range(round_num):
             # SART
             if epoch >= 0:
                 angle = [np.pi * ang / 180. for ang in angles]
-                recon_SART = tomopy.recon(tils.transpose(1, 0)[:, np.newaxis, :], angle, algorithm=tomopy.astra,
-                                   options={'method': 'SART_CUDA',
-                                            'num_iter': 100,
-                                            'proj_type': 'cuda',
-                                            'extra_options': {'MinConstraint': 0}
-                                            })[0]
-                # recon_SART = iradon_sart(tils, theta=angles, image=None, relaxation=relaxation)
+                # recon_SART = tomopy.recon(tils.transpose(1, 0)[:, np.newaxis, :], angle, algorithm=tomopy.astra,
+                #                    options={'method': 'SART_CUDA',
+                #                             'num_iter': 100,
+                #                             'proj_type': 'cuda',
+                #                             'extra_options': {'MinConstraint': 0}
+                #                             })[0]
+                recon_SART = iradon_sart(tils, theta=angles, image=None, relaxation=relaxation)
             else:
                 recon_SART = iradon_sart(tils, theta=angles, image=denoise_TVM, relaxation=relaxation)
             unit_tvm = np.zeros(recon_SART.shape)
