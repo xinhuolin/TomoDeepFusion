@@ -143,7 +143,25 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.set_iter.setSingleStep(1)  # 2
         self.set_iter.setValue(1)
 
+        self.sart_iter_label = QtWidgets.QLabel('SART iter:', self.centralwidget)
+        self.sart_iter_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.sart_iter_label.setGeometry(QtCore.QRect(860, 180, 60, 23))
 
+        self.sart_iter = QtWidgets.QSpinBox(self.centralwidget)
+        self.sart_iter.setGeometry(QtCore.QRect(930, 180, 60, 23))
+        self.sart_iter.setRange(1, 1000)  # 1
+        self.sart_iter.setSingleStep(1)  # 2
+        self.sart_iter.setValue(10)
+
+        self.sirt_iter_label = QtWidgets.QLabel('SIRT iter:', self.centralwidget)
+        self.sirt_iter_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.sirt_iter_label.setGeometry(QtCore.QRect(860, 150, 60, 23))
+
+        self.sirt_iter = QtWidgets.QSpinBox(self.centralwidget)
+        self.sirt_iter.setGeometry(QtCore.QRect(930, 150, 60, 23))
+        self.sirt_iter.setRange(1, 1000)  # 1
+        self.sirt_iter.setSingleStep(1)  # 2
+        self.sirt_iter.setValue(10)
 
 
 

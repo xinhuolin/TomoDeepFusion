@@ -36,7 +36,7 @@ def GetIndexRangeOfBlk(height, width, blk_row, blk_col, blk_r, blk_c, over_lap =
 
 	return (upper_left_c, upper_left_r, lower_right_c, lower_right_r), (ol_upper_left_c, ol_upper_left_r, ol_lower_right_c, ol_lower_right_r)
 
-def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, iter = 1):
+def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sart_iter, sirt_iter, iter = 1):
 	angle = matangles[0].astype(np.float)
 	tomos = {}
 	tomos_r = {}
@@ -68,9 +68,13 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, ite
 			if recon_path == "wbp":
 				tomogram_recon = iradon(sinogram, theta=angle)
 			elif recon_path == "sart":
-				tomogram_recon = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+				for e in range(sart_iter):
+					if e==0:
+						tomogram_recon = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+					else:
+						tomogram_recon = iradon_sart(sinogram, theta=angle, image=tomogram_recon, relaxation=0.3)
 			elif recon_path == "sirt":
-				tomogram_recon = Recon.sirt_xin(sinogram, angles=angle)  # iradon 0. 255.
+				tomogram_recon = Recon.sirt_xin(sinogram, angle, sirt_iter)  # iradon 0. 255.
 			else:
 				raise ValueError
 			tomos_r[name][j, :, :] = tomogram_recon.copy()
@@ -79,9 +83,13 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, ite
 			if recon_path == "wbp":
 				tomogram_recon = iradon(sinogram, theta=angle)
 			elif recon_path == "sart":
-				tomogram_recon = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+				for e in range(sart_iter):
+					if e==0:
+						tomogram_recon = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+					else:
+						tomogram_recon = iradon_sart(sinogram, theta=angle, image=tomogram_recon, relaxation=0.3)
 			elif recon_path == "sirt":
-				tomogram_recon = Recon.sirt_xin(sinogram, angles=angle)  # iradon 0. 255.
+				tomogram_recon = Recon.sirt_xin(sinogram, angle, sirt_iter)  # iradon 0. 255.
 			else:
 				raise ValueError
 			tomos_r[name][j, :, :] = tomogram_recon.copy()
@@ -89,13 +97,17 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, ite
 			if recon_path == "wbp":
 				tomogram = iradon(sinogram, theta=angle)
 			elif recon_path == "sart":
-				tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+				for e in range(sart_iter):
+					if e==0:
+						tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+					else:
+						tomogram = iradon_sart(sinogram, theta=angle, image=tomogram, relaxation=0.3)
 			elif recon_path == "sirt":
-				tomogram = Recon.sirt_xin(sinogram, angles=angle)  # iradon 0. 255.
+				tomogram = Recon.sirt_xin(sinogram, angle, sirt_iter)  # iradon 0. 255.
 			else:
 				raise ValueError
 
-		tomos[name][j, :, :] = tomogram.copy()
+			tomos[name][j, :, :] = tomogram.copy()
 	if is_fusion>0:
 		tomos_d[name] = tomos[name]
 		tomos[name] = tomos_r[name]
@@ -138,7 +150,11 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, ite
 		tomos_d[name] = np.zeros((size[0], topad, topad))
 		with torch.no_grad():
 			for idx in tqdm(range(ori_tensor.shape[0])):
-				rec = unet(ori_tensor[idx:idx+1,:,:,:])
+				for j in range(iter):
+					if j==0:
+						rec = unet(ori_tensor[idx:idx+1,:,:,:])
+					else:
+						rec = unet(rec)
 				rec = rec.cpu().numpy()[:, 0, :, :]
 				tomos_d[name][idx] = rec
 

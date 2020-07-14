@@ -2,14 +2,14 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib
-from model import PConvUNet, NestedUNet, NLD, VGG16FeatureExtractor
-from torchvision import transforms
+# import matplotlib.pyplot as plt
+# import matplotlib
+# from model import PConvUNet, NestedUNet, NLD, VGG16FeatureExtractor
+# from torchvision import transforms
 import scipy.io as scio
-import os
-from PIL import Image
-from Recon import Recon
+# import os
+# from PIL import Image
+# from Recon import Recon
 from skimage.transform import radon, iradon, iradon_sart
 
 # use_gpu = torch.cuda.is_available()
@@ -100,7 +100,7 @@ from skimage.transform import radon, iradon, iradon_sart
 #
 # print(tomos.shape, output.shape)
 
-path = r"dataadf.mat"
+path = r"datarecon.mat"
 data = scio.loadmat(path)
 keys = list(data.keys())
 print(keys)
