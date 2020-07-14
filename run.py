@@ -102,7 +102,8 @@ class Code_MainWindow(Ui_MainWindow):
         dirname = os.path.dirname(self.imagePath_content)
         dataname = self.listData.currentText()
         result_d, result = load_model(dataname, self.matdata, self.matangles, self.matsize, model_path,\
-                                 recon_path, self.cuda, self.set_iter.value())
+                                 recon_path, self.cuda, \
+                                 self.sart_iter.value(), self.sirt_iter.value(), self.set_iter.value())
         savename = os.path.join(dirname, dataname)
         if not os.path.exists(savename):
             os.mkdir(savename)
