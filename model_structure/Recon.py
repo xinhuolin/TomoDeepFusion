@@ -285,7 +285,6 @@ class Recon(object):
         y = (output.data).cpu().numpy()[0, 0, :, :]
         end_time = time.time()
         # print("The time cost of %s is: %s" % ("fusion_3dGAN", end_time - start_time))
-
         return y
 
     @staticmethod
