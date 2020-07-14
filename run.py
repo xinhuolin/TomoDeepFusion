@@ -93,8 +93,8 @@ class Code_MainWindow(Ui_MainWindow):
     def __load_model(self):
         # if not self.ori_image:
         #     raise Exception("No image is selected.")
-        self.img_num.setMaximum(self.matsize[0]-1)
-        self.img_num_show.setRange(0,self.matsize[0]-1)
+        self.img_num.setMaximum(self.matsize[1]-1)
+        self.img_num_show.setRange(0,self.matsize[1]-1)
         self.cuda = self.use_cuda.isChecked()
         model_path = os.path.join(self.__curdir, self.__models[self.model_name])
         recon_path = self.recon_name
