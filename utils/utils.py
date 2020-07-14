@@ -57,12 +57,12 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, ite
 		is_fusion = 2
 	else:
 		raise ValueError
-
-
+	size = list(size)
+	size[0], size[1] = size[1], size[0]
 	tomos[name] = np.zeros((size[0], size[1], size[1]))
 	tomos_r[name] = np.zeros((size[0], size[1], size[1]))
 	for j in tqdm(range(size[0])):
-		sinogram = np.array(matdata[name][j,:,:]).astype(np.float)
+		sinogram = np.array(matdata[name][:,j,:]).astype(np.float)
 		if is_fusion==1:
 			tomogram = Recon.fusion_3d(sinogram, angle, model_path)
 			if recon_path == "wbp":
