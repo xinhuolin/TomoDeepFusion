@@ -43,9 +43,12 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 	tomos_d = {}
 	is_fusion = 0
 	if os.path.basename(model_path) == "Denoise(sharp).pth":
-		from model_structure.unet_standard import NestedUNet
+		from model_structure.model import NestedUNet
 		unet = NestedUNet(nb_filter=(64, 128, 256, 512, 1024))
-	elif os.path.basename(model_path) == "Denoise(49).pth":
+	elif os.path.basename(model_path) == "Denoise(delta10).pth":
+		from model_structure.model import NestedUNet
+		unet = NestedUNet()
+	elif os.path.basename(model_path) == "Denoise(IC).pth":
 		from model_structure.model import NestedUNet
 		unet = NestedUNet()
 	elif os.path.basename(model_path) == "Denoise(80).pth":
@@ -108,7 +111,7 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 			else:
 				raise ValueError
 
-			tomos[name][j, :, :] = tomogram.copy()
+		tomos[name][j, :, :] = tomogram.copy()
 	if is_fusion>0:
 		tomos_d[name] = tomos[name]
 		tomos[name] = tomos_r[name]
