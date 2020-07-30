@@ -34,9 +34,10 @@ class Recon(object):
     @staticmethod
     def irdm(sinogram_np, angles, model_dir, numIter=1):
         # print("--start irdm---")
+        start_time = time.time()
         recon_wb = iradon(sinogram_np, theta=angles, circle=True) / 255.
         unet = NestedUNet(nb_filter=(64, 128, 256, 512, 1024)).cuda()
-        unet = unet.eval()
+        # unet = unet.eval()
         unet.load_state_dict(torch.load(os.path.join(model_dir, "Denoise(sharp).pth")))
         size = sinogram_np.shape
         if size[0] == 128 or size[0] == 256 or size[0] == 512 or size[0] == 1024:
@@ -50,10 +51,10 @@ class Recon(object):
                 topad = 512
             elif size[0] < 1024:
                 topad = 1024
-            padleft = np.zeros((topad, (topad - size[0]) // 2))
-            padright = np.zeros((topad, int(topad - size[0] - padleft.shape[1])))
-            padup = np.zeros(((topad - size[0]) // 2, size[0]))
-            paddown = np.zeros((int(topad - size[0] - padup.shape[0]), size[0]))
+            padleft = np.zeros((topad, (topad - size[0]) // 2)) + np.mean(recon_wb[:, 0])
+            padright = np.zeros((topad, int(topad - size[0] - padleft.shape[1]))) + np.mean(recon_wb[:, -1])
+            padup = np.zeros(((topad - size[0]) // 2, size[0])) + np.mean(recon_wb[0, :])
+            paddown = np.zeros((int(topad - size[0] - padup.shape[0]), size[0])) + np.mean(recon_wb[-1, :])
             recon_wb = np.concatenate((padup, recon_wb, paddown), axis=0)
             recon_wb = np.concatenate((padleft, recon_wb, padright), axis=1)
         transform = transforms.Compose([transforms.ToTensor()])
@@ -70,13 +71,15 @@ class Recon(object):
         else:
             recon_np = output.cpu().numpy()[0, 0, padup.shape[0]:padup.shape[0]+size[0], padleft.shape[1]:padleft.shape[1]+size[0]]
         # recon_np = iradon(sinogram_np, theta=angles, circle=True)  # iradon 0. 255.
+        end_time = time.time()
+        # print("The time cost of %s is: %s" % ("irdm", end_time - start_time))
         return recon_np
 
     def irdm_80(sinogram_np, angles,model_dir, numIter=1):
         # print("--start irdm---")
         recon_wb = iradon(sinogram_np, theta=angles, circle=True) / 255.
         unet = NestedUNet(nb_filter=(32,64,128,256,512)).cuda()
-        unet = unet.eval()
+        # unet = unet.eval()
         unet.load_state_dict(torch.load(os.path.join(model_dir, "Denoise(80).pth")))
         size = sinogram_np.shape
         if size[0] == 128 or size[0] == 256 or size[0] == 512 or size[0] == 1024:
@@ -90,10 +93,10 @@ class Recon(object):
                 topad = 512
             elif size[0] < 1024:
                 topad = 1024
-            padleft = np.zeros((topad, (topad - size[0]) // 2))
-            padright = np.zeros((topad, int(topad - size[0] - padleft.shape[1])))
-            padup = np.zeros(((topad - size[0]) // 2, size[0]))
-            paddown = np.zeros((int(topad - size[0] - padup.shape[0]), size[0]))
+            padleft = np.zeros((topad, (topad - size[0]) // 2)) + np.mean(recon_wb[:, 0])
+            padright = np.zeros((topad, int(topad - size[0] - padleft.shape[1]))) + np.mean(recon_wb[:, -1])
+            padup = np.zeros(((topad - size[0]) // 2, size[0])) + np.mean(recon_wb[0, :])
+            paddown = np.zeros((int(topad - size[0] - padup.shape[0]), size[0])) + np.mean(recon_wb[-1, :])
             recon_wb = np.concatenate((padup, recon_wb, paddown), axis=0)
             recon_wb = np.concatenate((padleft, recon_wb, padright), axis=1)
         transform = transforms.Compose([transforms.ToTensor()])
@@ -189,13 +192,13 @@ class Recon(object):
     @classmethod
     def fusion_3d(cls, sinogram_np, angles, model3d_dir, numIter=1):
         # print("--start irdm---")
-        wbp_input = Normalize(cls.wbp(sinogram_np, angles).astype('float16')[:, :, np.newaxis])
-        irdm_input = Normalize(cls.irdm(sinogram_np, angles, os.path.dirname(model3d_dir)).astype('float16')[:, :, np.newaxis])
-        irdm_80_input = Normalize(cls.irdm_80(sinogram_np, angles, os.path.dirname(model3d_dir)).astype('float16')[:, :, np.newaxis])
-        sirt_xin_input = Normalize(cls.sirt_xin(sinogram_np, angles).astype('float16')[:, :, np.newaxis])
-        sart_tvm_input = Normalize(cls.sart_tvm(sinogram_np, angles).astype('float16')[:, :, np.newaxis])
-        sirt_cuda_input = Normalize(cls.sirt_cuda(sinogram_np, angles)[0].astype('float16')[:, :, np.newaxis])
-        sart_cuda_input = Normalize(cls.sart_cuda(sinogram_np, angles)[0].astype('float16')[:, :, np.newaxis])
+        wbp_input = Normalize(cls.wbp(sinogram_np, angles).astype('float32')[:, :, np.newaxis])
+        irdm_input = Normalize(cls.irdm(sinogram_np, angles, os.path.dirname(model3d_dir)).astype('float32')[:, :, np.newaxis])
+        irdm_80_input = Normalize(cls.irdm_80(sinogram_np, angles, os.path.dirname(model3d_dir)).astype('float32')[:, :, np.newaxis])
+        sirt_xin_input = Normalize(cls.sirt_xin(sinogram_np, angles).astype('float32')[:, :, np.newaxis])
+        sart_tvm_input = Normalize(cls.sart_tvm(sinogram_np, angles).astype('float32')[:, :, np.newaxis])
+        sirt_cuda_input = Normalize(cls.sirt_cuda(sinogram_np, angles)[0].astype('float32')[:, :, np.newaxis])
+        sart_cuda_input = Normalize(cls.sart_cuda(sinogram_np, angles)[0].astype('float32')[:, :, np.newaxis])
         img_input = np.concatenate([wbp_input, irdm_input, irdm_80_input, sirt_xin_input, sart_tvm_input, \
                                     sirt_cuda_input, sart_cuda_input], 2)  # irdm,
         size = img_input.shape
@@ -210,10 +213,10 @@ class Recon(object):
                 topad = 512
             elif size[0] < 1024:
                 topad = 1024
-            padleft = np.zeros((topad, (topad - size[0]) // 2, 7))
-            padright = np.zeros((topad, int(topad - size[0] - padleft.shape[1]), 7))
-            padup = np.zeros(((topad - size[0]) // 2, size[0], 7))
-            paddown = np.zeros((int(topad - size[0] - padup.shape[0]), size[0], 7))
+            padleft = np.zeros((topad, (topad - size[0]) // 2, 7)) + np.mean(img_input[:, 0, :])
+            padright = np.zeros((topad, int(topad - size[0] - padleft.shape[1]), 7)) + np.mean(img_input[:, -1, :])
+            padup = np.zeros(((topad - size[0]) // 2, size[0], 7)) + np.mean(img_input[0, :, :])
+            paddown = np.zeros((int(topad - size[0] - padup.shape[0]), size[0], 7)) + np.mean(img_input[-1, :, :])
             img_input = np.concatenate((padup, img_input, paddown), axis=0)
             img_input = np.concatenate((padleft, img_input, padright), axis=1)
         transform = transforms.Compose([transforms.ToTensor()])
@@ -230,24 +233,26 @@ class Recon(object):
         with torch.no_grad():
             for _ in range(numIter):
                 output = m(output)
-        y = (output.data).cpu().numpy()[0, 0, :, :]
         end_time = time.time()
         # print("The time cost of %s is: %s" % ("fusion_3d", end_time - start_time))
-
+        if size[0] == 128 or size[0] == 256 or size[0] == 512 or size[0] == 1024:
+            y = output.cpu().numpy()[0, 0, :, :]
+        else:
+            y = output.cpu().numpy()[0, 0, padup.shape[0]:padup.shape[0]+size[0], padleft.shape[1]:padleft.shape[1]+size[0]]
         return y
 
     @classmethod
     def fusion_3dGAN(cls, sinogram_np, angles, model3dGAN_dir, numIter=1):
         # print("--start irdm---")
-        wbp_input = Normalize(cls.wbp(sinogram_np, angles).astype('float16')[:, :, np.newaxis])
+        wbp_input = Normalize(cls.wbp(sinogram_np, angles).astype('float32')[:, :, np.newaxis])
         irdm_input = Normalize(
-            cls.irdm(sinogram_np, angles, os.path.dirname(model3dGAN_dir)).astype('float16')[:, :, np.newaxis])
+            cls.irdm(sinogram_np, angles, os.path.dirname(model3dGAN_dir)).astype('float32')[:, :, np.newaxis])
         irdm_80_input = Normalize(
-            cls.irdm_80(sinogram_np, angles, os.path.dirname(model3dGAN_dir)).astype('float16')[:, :, np.newaxis])
-        sirt_xin_input = Normalize(cls.sirt_xin(sinogram_np, angles).astype('float16')[:, :, np.newaxis])
-        sart_tvm_input = Normalize(cls.sart_tvm(sinogram_np, angles).astype('float16')[:, :, np.newaxis])
-        sirt_cuda_input = Normalize(cls.sirt_cuda(sinogram_np, angles)[0].astype('float16')[:, :, np.newaxis])
-        sart_cuda_input = Normalize(cls.sart_cuda(sinogram_np, angles)[0].astype('float16')[:, :, np.newaxis])
+            cls.irdm_80(sinogram_np, angles, os.path.dirname(model3dGAN_dir)).astype('float32')[:, :, np.newaxis])
+        sirt_xin_input = Normalize(cls.sirt_xin(sinogram_np, angles).astype('float32')[:, :, np.newaxis])
+        sart_tvm_input = Normalize(cls.sart_tvm(sinogram_np, angles).astype('float32')[:, :, np.newaxis])
+        sirt_cuda_input = Normalize(cls.sirt_cuda(sinogram_np, angles)[0].astype('float32')[:, :, np.newaxis])
+        sart_cuda_input = Normalize(cls.sart_cuda(sinogram_np, angles)[0].astype('float32')[:, :, np.newaxis])
         img_input = np.concatenate([wbp_input, irdm_input, irdm_80_input, sirt_xin_input, sart_tvm_input, \
                                     sirt_cuda_input, sart_cuda_input], 2)  # irdm,
         size = img_input.shape
@@ -262,10 +267,10 @@ class Recon(object):
                 topad = 512
             elif size[0] < 1024:
                 topad = 1024
-            padleft = np.zeros((topad, (topad - size[0]) // 2, 7))
-            padright = np.zeros((topad, int(topad - size[0] - padleft.shape[1]), 7))
-            padup = np.zeros(((topad - size[0]) // 2, size[0], 7))
-            paddown = np.zeros((int(topad - size[0] - padup.shape[0]), size[0], 7))
+            padleft = np.zeros((topad, (topad - size[0]) // 2, 7)) + np.mean(img_input[:, 0, :])
+            padright = np.zeros((topad, int(topad - size[0] - padleft.shape[1]), 7)) + np.mean(img_input[:, -1, :])
+            padup = np.zeros(((topad - size[0]) // 2, size[0], 7)) + np.mean(img_input[0, :, :])
+            paddown = np.zeros((int(topad - size[0] - padup.shape[0]), size[0], 7)) + np.mean(img_input[-1, :, :])
             img_input = np.concatenate((padup, img_input, paddown), axis=0)
             img_input = np.concatenate((padleft, img_input, padright), axis=1)
         transform = transforms.Compose([transforms.ToTensor()])
@@ -282,7 +287,11 @@ class Recon(object):
         with torch.no_grad():
             for _ in range(numIter):
                 output = m(output)
-        y = (output.data).cpu().numpy()[0, 0, :, :]
+        if size[0] == 128 or size[0] == 256 or size[0] == 512 or size[0] == 1024:
+            y = output.cpu().numpy()[0, 0, :, :]
+        else:
+            y = output.cpu().numpy()[0, 0, padup.shape[0]:padup.shape[0] + size[0],
+                padleft.shape[1]:padleft.shape[1] + size[0]]
         end_time = time.time()
         # print("The time cost of %s is: %s" % ("fusion_3dGAN", end_time - start_time))
         return y
@@ -336,38 +345,38 @@ if __name__ == '__main__':
             sinogram = radon(img_np,
                              theta=angles,
                              circle=True)  # radon 0.255
-            wbp_np = Recon.wbp(sinogram, angles=angles)  # iradon 0. 255.
-            irdm_80_np = Recon.irdm_80(sinogram, angles=angles)  # iradon 0. 255.
+            # wbp_np = Recon.wbp(sinogram, angles=angles)  # iradon 0. 255.
+            # irdm_80_np = Recon.irdm_80(sinogram, angles=angles)  # iradon 0. 255.
             irdm_np = Recon.irdm(sinogram, angles=angles)  # iradon 0. 255.
-            sart_tvm_np = Recon.sart_tvm(sinogram, angles=angles)  # iradon 0. 255.
-            sirt_xin_np = Recon.sirt_xin(sinogram, angles=angles)  # iradon 0. 255.
-            sart_cuda_np = Recon.sart_cuda(sinogram, angles=angles)  # iradon 0. 255.
-            sirt_cuda_np = Recon.sirt_cuda(sinogram, angles=angles)  # iradon 0. 255.
-            import matplotlib.pyplot as plt
-            plt.figure(figsize=(4*4,4*2))
-            plt.subplot(241)
-            plt.title("origin")
-            plt.imshow(img_np.astype(np.float), cmap="gray")
-            plt.subplot(242)
-            plt.title("irdm")
-            plt.imshow(irdm_np.astype(np.float), cmap="gray")
-            plt.subplot(243)
-            plt.title("sart_tvm")
-            plt.imshow(sart_tvm_np.astype(np.float), cmap="gray")
-            plt.subplot(244)
-            plt.title("sirt_xin")
-            plt.imshow(sirt_xin_np.astype(np.float), cmap="gray")
-            plt.subplot(245)
-            plt.title("sart_cuda")
-            plt.imshow(sart_cuda_np[0].astype(np.float), cmap="gray")
-            plt.subplot(246)
-            plt.title("sirt_cuda")
-            plt.imshow(sirt_cuda_np[0].astype(np.float), cmap="gray")
-            plt.subplot(247)
-            plt.title("wbp")
-            plt.imshow(wbp_np.astype(np.float), cmap="gray")
-            plt.subplot(248)
-            plt.title("irdm_80_np")
-            plt.imshow(irdm_80_np.astype(np.float), cmap="gray")
-            plt.savefig("%s_recon.png" % name)
+            # sart_tvm_np = Recon.sart_tvm(sinogram, angles=angles)  # iradon 0. 255.
+            # sirt_xin_np = Recon.sirt_xin(sinogram, angles=angles)  # iradon 0. 255.
+            # sart_cuda_np = Recon.sart_cuda(sinogram, angles=angles)  # iradon 0. 255.
+            # sirt_cuda_np = Recon.sirt_cuda(sinogram, angles=angles)  # iradon 0. 255.
+            # import matplotlib.pyplot as plt
+            # plt.figure(figsize=(4*4,4*2))
+            # plt.subplot(241)
+            # plt.title("origin")
+            # plt.imshow(img_np.astype(np.float), cmap="gray")
+            # plt.subplot(242)
+            # plt.title("irdm")
+            # plt.imshow(irdm_np.astype(np.float), cmap="gray")
+            # plt.subplot(243)
+            # plt.title("sart_tvm")
+            # plt.imshow(sart_tvm_np.astype(np.float), cmap="gray")
+            # plt.subplot(244)
+            # plt.title("sirt_xin")
+            # plt.imshow(sirt_xin_np.astype(np.float), cmap="gray")
+            # plt.subplot(245)
+            # plt.title("sart_cuda")
+            # plt.imshow(sart_cuda_np[0].astype(np.float), cmap="gray")
+            # plt.subplot(246)
+            # plt.title("sirt_cuda")
+            # plt.imshow(sirt_cuda_np[0].astype(np.float), cmap="gray")
+            # plt.subplot(247)
+            # plt.title("wbp")
+            # plt.imshow(wbp_np.astype(np.float), cmap="gray")
+            # plt.subplot(248)
+            # plt.title("irdm_80_np")
+            # plt.imshow(irdm_80_np.astype(np.float), cmap="gray")
+            # plt.savefig("%s_recon.png" % name)
 

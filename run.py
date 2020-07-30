@@ -48,11 +48,12 @@ class Code_MainWindow(Ui_MainWindow):
 
         self.__model_dir = "model_weights"
         self.__models = {
-            'Denoise(49)': os.path.join(self.__model_dir, 'Denoise(49).pth'),
+            'Denoise(delta10)': os.path.join(self.__model_dir, 'Denoise(delta10).pth'),
             'Denoise(80)': os.path.join(self.__model_dir, 'Denoise(80).pth'),
             'Denoise(sharp)': os.path.join(self.__model_dir, 'Denoise(sharp).pth'),
             'Deepfusion(3d)': os.path.join(self.__model_dir, 'Deepfusion(3d).pth'),
             'Deepfusion(3dGAN)': os.path.join(self.__model_dir, 'Deepfusion(3dGAN).pth'),
+            'Denoise(IC)': os.path.join(self.__model_dir, 'Denoise(IC).pth'),
         }
 
         from torch.cuda import is_available
