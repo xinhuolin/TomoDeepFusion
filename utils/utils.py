@@ -39,6 +39,7 @@ def GetIndexRangeOfBlk(height, width, blk_row, blk_col, blk_r, blk_c, over_lap =
 def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sart_iter, sirt_iter, iter = 1):
 	angle = matangles[0].astype(np.float)
 	tomos = {}
+	tomos_max_value = []
 	tomos_r = {}
 	tomos_d = {}
 	is_fusion = 0
@@ -101,17 +102,22 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 			if recon_path == "wbp":
 				tomogram = iradon(sinogram, theta=angle)
 			elif recon_path == "sart":
-				for e in range(sart_iter):
-					if e==0:
-						tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
-					else:
-						tomogram = iradon_sart(sinogram, theta=angle, image=tomogram, relaxation=0.3)
+				tomogram = Recon.sart_cuda(sinogram, angle)
+				# for e in range(sart_iter):
+				# 	if e==0:
+				# 		tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+				# 	else:
+				# 		tomogram = iradon_sart(sinogram, theta=angle, image=tomogram, relaxation=0.3)
 			elif recon_path == "sirt":
 				tomogram = Recon.sirt_xin(sinogram, angle, sirt_iter)  # iradon 0. 255.
 			else:
 				raise ValueError
 
 		tomos[name][j, :, :] = tomogram.copy()
+	tomos[name] = tomos[name] / tomos[name].max()
+	for idx in range(tomos[name].shape[0]):
+		tomos_max_value.append(tomos[name][idx].max())
+
 	if is_fusion>0:
 		tomos_d[name] = tomos[name]
 		tomos[name] = tomos_r[name]
@@ -138,6 +144,41 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 		transform = transforms.Compose([transforms.ToTensor()])
 		img = transform(tomos[name].transpose((1, 2, 0)))
 
+		# transform = ToTensor()
+		# ori_tensor = transform(data)
+		# ori_tensor = torch.unsqueeze(ori_tensor, 0)
+		#
+		# padding_left = 0
+		# padding_right = 0
+		# padding_top = 0
+		# padding_bottom = 0
+		# ori_height = ori_tensor.size()[2]
+		# ori_width = ori_tensor.size()[3]
+		# use_padding = False
+		# if ori_width >= ori_height:
+		# 	padsize = ori_width
+		# else:
+		# 	padsize = ori_height
+		# if np.log2(padsize) >= 7.0:
+		# 	if (np.log2(padsize) - 7) % 1 > 0:
+		# 		padsize = 2 ** (np.log2(padsize) // 1 + 1)
+		# else:
+		# 	padsize = 2 ** 7
+		# if ori_height < padsize:
+		# 	padding_top = int(padsize - ori_height) // 2
+		# 	padding_bottom = int(padsize - ori_height - padding_top)
+		# 	use_padding = True
+		# if ori_width < padsize:
+		# 	padding_left = int(padsize - ori_width) // 2
+		# 	padding_right = int(padsize - ori_width - padding_left)
+		# 	use_padding = True
+		# if use_padding:
+		# 	padding_transform = torch.nn.ConstantPad2d((padding_left, \
+		# 												padding_right, \
+		# 												padding_top, \
+		# 												padding_bottom), 0)
+		# 	ori_tensor = padding_transform(ori_tensor)
+
 
 
 
@@ -152,15 +193,14 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 			ori_tensor = torch.unsqueeze(img.type(torch.FloatTensor), 1)
 
 		tomos_d[name] = np.zeros((size[0], topad, topad))
+		# batchsize = 1
 		with torch.no_grad():
 			for idx in tqdm(range(ori_tensor.shape[0])):
+				rec = ori_tensor[idx:1+idx,:,:,:] / ori_tensor[idx:1+idx,:,:,:].max()
 				for j in range(iter):
-					if j==0:
-						rec = unet(ori_tensor[idx:idx+1,:,:,:])
-					else:
-						rec = unet(rec)
-				rec = rec.cpu().numpy()[:, 0, :, :]
-				tomos_d[name][idx] = rec
+					rec = unet(rec)
+				rec = rec.cpu().numpy()[:, 0, :, :] * tomos_max_value[idx]
+				tomos_d[name][idx:1+idx] = rec
 
 
 	return tomos_d, tomos

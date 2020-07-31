@@ -122,15 +122,15 @@ class Code_MainWindow(Ui_MainWindow):
         dataname = self.listData.currentText()
         idx = self.img_num.value()
         print(dataname, idx)
-        model_out = map01(self.model_out[dataname][idx, :, :])
-        model_out = (model_out * 255 / np.max(model_out)).astype('uint8')
+        model_out = self.model_out[dataname][idx, :, :]
+        model_out = (model_out * 255).astype('uint8')
         model_out = Image.fromarray((model_out), mode='L')
         model_out = PIL2Pixmap(model_out)
         model_out.scaled(self.model_output.size(), QtCore.Qt.KeepAspectRatio)
         self.model_output.setPixmap(model_out)
         self.model_output.show()
-        recon_out = map01(self.recon_out[dataname][idx, :, :])
-        recon_out = (recon_out * 255 / np.max(recon_out)).astype('uint8')
+        recon_out = self.recon_out[dataname][idx, :, :]
+        recon_out = (recon_out * 255).astype('uint8')
         recon_out = Image.fromarray((recon_out), mode='L')
         recon_out = PIL2Pixmap(recon_out)
         recon_out.scaled(self.model_output.size(), QtCore.Qt.KeepAspectRatio)
@@ -186,16 +186,16 @@ class Code_MainWindow(Ui_MainWindow):
         self.img_num_show.setValue(self.img_num.value())
         # print(dataname, idx)
         if self.show_flag:
-            model_out = map01(self.model_out[dataname][idx,:,:])
-            model_out = (model_out * 255 / np.max(model_out)).astype('uint8')
+            model_out = self.model_out[dataname][idx,:,:]
+            model_out = (model_out * 255).astype('uint8')
             model_out = Image.fromarray((model_out), mode='L')
             model_out = PIL2Pixmap(model_out)
             model_out.scaled(self.model_output.size(), QtCore.Qt.KeepAspectRatio)
             self.model_output.setPixmap(model_out)
             self.model_output.show()
 
-            recon_out = map01(self.recon_out[dataname][idx,:,:])
-            recon_out = (recon_out * 255 / np.max(recon_out)).astype('uint8')
+            recon_out = self.recon_out[dataname][idx,:,:]
+            recon_out = (recon_out * 255).astype('uint8')
             recon_out = Image.fromarray((recon_out), mode='L')
             recon_out = PIL2Pixmap(recon_out)
             recon_out.scaled(self.model_output.size(), QtCore.Qt.KeepAspectRatio)
