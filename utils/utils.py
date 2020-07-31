@@ -103,12 +103,12 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 			if recon_path == "wbp":
 				tomogram = iradon(sinogram, theta=angle)
 			elif recon_path == "sart":
-				tomogram = Recon.sart_cuda(sinogram, angle)
-				# for e in range(sart_iter):
-				# 	if e==0:
-				# 		tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
-				# 	else:
-				# 		tomogram = iradon_sart(sinogram, theta=angle, image=tomogram, relaxation=0.3)
+				# tomogram = Recon.sart_cuda(sinogram, angle)
+				for e in range(sart_iter):
+					if e==0:
+						tomogram = iradon_sart(sinogram, theta=angle, image=None, relaxation=0.3)
+					else:
+						tomogram = iradon_sart(sinogram, theta=angle, image=tomogram, relaxation=0.3)
 			elif recon_path == "sirt":
 				tomogram = Recon.sirt_xin(sinogram, angle, sirt_iter)  # iradon 0. 255.
 			else:
