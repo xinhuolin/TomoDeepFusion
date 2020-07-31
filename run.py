@@ -129,8 +129,8 @@ class Code_MainWindow(Ui_MainWindow):
         model_out.scaled(self.model_output.size(), QtCore.Qt.KeepAspectRatio)
         self.model_output.setPixmap(model_out)
         self.model_output.show()
-        recon_out = self.recon_out[dataname][idx, :, :]
-        recon_out = (recon_out * 255).astype('uint8')
+        recon_out = map01(self.recon_out[dataname][idx, :, :])
+        recon_out = (recon_out * 255  / np.max(recon_out)).astype('uint8')
         recon_out = Image.fromarray((recon_out), mode='L')
         recon_out = PIL2Pixmap(recon_out)
         recon_out.scaled(self.model_output.size(), QtCore.Qt.KeepAspectRatio)
@@ -154,7 +154,7 @@ class Code_MainWindow(Ui_MainWindow):
                             fp.write(dataStr)
 
         for n in self.recon_out:
-            array = self.model_out[n]
+            array = self.recon_out[n]
             with open(path + "/%s_%s_float32_%s.bin" % \
                       (n, array.shape, self.recon_name), 'wb')as fp:
                 for i in range(len(array[0][0])):  #
@@ -194,8 +194,8 @@ class Code_MainWindow(Ui_MainWindow):
             self.model_output.setPixmap(model_out)
             self.model_output.show()
 
-            recon_out = self.recon_out[dataname][idx,:,:]
-            recon_out = (recon_out * 255).astype('uint8')
+            recon_out = map01(self.recon_out[dataname][idx, :, :])
+            recon_out = (recon_out * 255 / np.max(recon_out)).astype('uint8')
             recon_out = Image.fromarray((recon_out), mode='L')
             recon_out = PIL2Pixmap(recon_out)
             recon_out.scaled(self.model_output.size(), QtCore.Qt.KeepAspectRatio)

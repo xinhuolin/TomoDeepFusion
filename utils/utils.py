@@ -39,6 +39,7 @@ def GetIndexRangeOfBlk(height, width, blk_row, blk_col, blk_r, blk_c, over_lap =
 def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sart_iter, sirt_iter, iter = 1):
 	angle = matangles[0].astype(np.float)
 	tomos = {}
+	recons = {}
 	tomos_max_value = []
 	tomos_r = {}
 	tomos_d = {}
@@ -114,6 +115,7 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 				raise ValueError
 
 		tomos[name][j, :, :] = tomogram.copy()
+	recons[name] = tomos[name].copy()
 	tomos[name] = tomos[name] / tomos[name].max()
 	for idx in range(tomos[name].shape[0]):
 		tomos_max_value.append(tomos[name][idx].max())
@@ -203,7 +205,7 @@ def load_model(name, matdata, matangles, size, model_path, recon_path, cuda, sar
 				tomos_d[name][idx:1+idx] = rec
 
 
-	return tomos_d, tomos
+	return tomos_d, recons
 
 
 def PIL2Pixmap(im):
